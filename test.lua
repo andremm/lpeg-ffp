@@ -1,10 +1,10 @@
-#!/usr/bin/env lua5.1
+#!/usr/bin/env lua
 
 -- $Id: test.lua,v 1.101 2013/04/12 16:30:33 roberto Exp $
 
 -- require"strict"    -- just to be pedantic
 
-local m = require"lpeg"
+local m = require"lpeg-labels"
 
 
 -- for general use
@@ -1380,6 +1380,83 @@ errmsg('b <- a', 'undefined')
 errmsg("x <- 'a'  x <- 'b'", 'already defined')
 errmsg("'a' -", "near '-'")
 
+-- testing farthest fail position
+
+-- simple tests
+
+assert(m.match(m.P("a")^1 * -any, "ab") == nil,2)
+assert(m.match(m.P("a")^1 * -any, "ab", 1) == nil,2)
+assert(m.match(m.P("a")^1 * -any, "ab", 2) == nil,2)
+assert(m.match(m.P("a")^1 * -any, "ab", 3) == nil,2)
+assert(m.match(m.P("a")^1 * -any, "ab", 0) == nil,2)
+assert(m.match(m.P("a")^1 * -any, "ab", -1) == nil,2)
+assert(m.match(m.P("a")^1 * -any, "ab", -2) == nil,2)
+assert(m.match(m.P("a")^1 * -any, "ab", -3) == nil,2)
+
+-- grammar tests
+
+m.locale(m)
+
+local function token(pat)
+  return pat * m.V"Skip"
+end
+
+local function symb(str)
+  return token(m.P(str))
+end
+
+local function kw(str)
+  return token(m.P(str) * -m.V"idRest")
+end
+
+g = m.P { m.V"Tiny",
+  -- parser
+  Tiny = m.V"Skip" * m.V"CmdSeq" * -any;
+  CmdSeq = m.V"Cmd" * symb(";") * (m.V"Cmd" * symb(";"))^0;
+  Cmd = m.V"IfCmd" + m.V"RepeatCmd" + m.V"AssignCmd" +
+        m.V"ReadCmd" + m.V"WriteCmd";
+  IfCmd = kw("if") * m.V"Exp" * kw("then") * m.V"CmdSeq" *
+          (kw("else") * m.V"CmdSeq")^-1 * kw("end");
+  RepeatCmd = kw("repeat") * m.V"CmdSeq" * kw("until") * m.V"Exp";
+  AssignCmd = token(m.V"Name","Name") * symb(":=") * m.V"Exp";
+  ReadCmd = kw("read") * token(m.V"Name","Name");
+  WriteCmd = kw("write") * m.V"Exp";
+  Exp = m.V"SimpleExp" * (m.V"RelOp" * m.V"SimpleExp")^-1;
+  SimpleExp = m.V"Term" * (m.V"AddOp" * m.V"Term")^0;
+  Term = m.V"Factor" * (m.V"MulOp" * m.V"Factor")^0;
+  Factor = symb("(") * m.V"Exp" * symb(")") +
+           token(m.V"Number","Number") +
+           token(m.V"Name","Name");
+  -- lexer
+  Space = m.space^1;
+  Comment = m.P"//" * (any - m.P"\n")^0;
+  Skip = (m.V"Space" + m.V"Comment")^0;
+  idStart = m.alpha + m.P"_";
+  idRest = m.alnum + m.P"_";
+  Keywords = m.P"if" + "then" + "else" + "end" +
+              "repeat" + "until" + "read" + "write";
+  Reserved = m.V"Keywords" * -m.V"idRest";
+  Identifier = m.V"idStart" * m.V"idRest"^0;
+  Name = -m.V"Reserved" * m.V"Identifier" * -m.V"idRest";
+  Number = m.digit^1;
+  RelOp = symb("<") + symb("=");
+  AddOp = symb("+") + symb("-");
+  MulOp = symb("*") + symb("/");
+}
+
+p = [[
+n := 5;
+f := 1;
+repeat
+  f := f * n;
+  n := n - 1
+until (n < 1);
+write f;
+]]
+
+assert(m.match(g, p) == nil,51)
+
+print"+"
 
 print"OK"
 

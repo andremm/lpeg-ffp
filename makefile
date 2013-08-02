@@ -1,5 +1,5 @@
 LIBNAME = lpeg
-LUADIR = /usr/include/lua5.1/
+LUADIR = /opt/local/include/
 
 COPT = -O2
 # COPT = -DLPEG_DEBUG -g
@@ -29,22 +29,22 @@ FILES = lpvm.o lpcap.o lptree.o lpcode.o lpprint.o
 
 # For Linux
 linux:
-	make lpeg.so "DLLFLAGS = -shared -fPIC"
+	make lpeg-labels.so "DLLFLAGS = -shared -fPIC"
 
 # For Mac OS
 macosx:
-	make lpeg.so "DLLFLAGS = -bundle -undefined dynamic_lookup"
+	make lpeg-labels.so "DLLFLAGS = -bundle -undefined dynamic_lookup"
 
-lpeg.so: $(FILES)
-	env $(CC) $(DLLFLAGS) $(FILES) -o lpeg.so
+lpeg-labels.so: $(FILES)
+	env $(CC) $(DLLFLAGS) $(FILES) -o lpeg-labels.so
 
 $(FILES): makefile
 
-test: test.lua re.lua lpeg.so
+test: test.lua re-labels.lua lpeg-labels.so
 	./test.lua
 
 clean:
-	rm -f $(FILES) lpeg.so
+	rm -f $(FILES) lpeg-labels.so
 
 
 lpcap.o: lpcap.c lpcap.h lptypes.h

@@ -145,7 +145,7 @@ static int removedyncap (lua_State *L, Capture *capture,
 ** Opcode interpreter
 */
 const char *match (lua_State *L, const char *o, const char *s, const char *e,
-                   Instruction *op, Capture *capture, int ptop) {
+                   size_t *ffp, Instruction *op, Capture *capture, int ptop) {
   Stack stackbase[INITBACK];
   Stack *stacklimit = stackbase + INITBACK;
   Stack *stack = stackbase;  /* point to first empty slot in stack */
@@ -153,6 +153,7 @@ const char *match (lua_State *L, const char *o, const char *s, const char *e,
   int captop = 0;  /* point to first empty slot in captures */
   int ndyncap = 0;  /* number of dynamic captures (in Lua stack) */
   const Instruction *p = op;  /* current instruction */
+  const char *pos = s;
   stack->p = &giveup; stack->s = s; stack->caplevel = 0; stack++;
   lua_pushlightuserdata(L, stackbase);
   for (;;) {
@@ -276,6 +277,11 @@ const char *match (lua_State *L, const char *o, const char *s, const char *e,
         /* go through */
       case IFail:
       fail: { /* pattern failed: try to backtrack */
+        /* update the farthest fail position */
+        if (s > pos) {
+          pos = s;
+          *ffp = pos - o;
+        }
         do {  /* remove pending calls */
           assert(stack > getstackbase(L, ptop));
           s = (--stack)->s;

@@ -1093,14 +1093,17 @@ static int lp_match (lua_State *L) {
   Instruction *code = (p->code != NULL) ? p->code : prepcompile(L, p, 1);
   const char *s = luaL_checklstring(L, SUBJIDX, &l);
   size_t i = initposition(L, l);
+  size_t ffp = i; /* initialize the farthest fail position */
   int ptop = lua_gettop(L);
   lua_pushnil(L);  /* initialize subscache */
   lua_pushlightuserdata(L, capture);  /* initialize caplistidx */
   lua_getfenv(L, 1);  /* initialize penvidx */
-  r = match(L, s, s + i, s + l, code, capture, ptop);
+  r = match(L, s, s + i, s + l, &ffp, code, capture, ptop);
   if (r == NULL) {
     lua_pushnil(L);
-    return 1;
+    if (ffp < l) ffp++; /* adjust the farthest fail position */
+    lua_pushinteger(L, ffp);
+    return 2;
   }
   return getcaptures(L, s, r, ptop);
 }
