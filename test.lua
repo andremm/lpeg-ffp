@@ -1047,7 +1047,7 @@ checkeq(t, {'a', 'aa', 20, 'a', 'aaa', 'aaa'})
 -- Tests for 're' module
 -------------------------------------------------------------------
 
-local re = require "re"
+local re = require "re-labels"
 
 local match, compile = re.match, re.compile
 
