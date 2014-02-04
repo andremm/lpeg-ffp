@@ -1,5 +1,5 @@
 LIBNAME = lpeg
-LUADIR = /opt/local/include/
+LUADIR = /usr/include/lua5.2
 
 COPT = -O2
 # COPT = -DLPEG_DEBUG -g

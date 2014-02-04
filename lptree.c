@@ -1226,7 +1226,7 @@ int luaopen_lpeg (lua_State *L) {
   lua_pushnumber(L, MAXBACK);  /* initialize maximum backtracking */
   lua_setfield(L, LUA_REGISTRYINDEX, MAXSTACKIDX);
   luaL_register(L, NULL, metareg);
-  luaL_register(L, "lpeg", pattreg);
+  luaL_register(L, "lpeg-labels", pattreg);
   lua_pushvalue(L, -1);
   lua_setfield(L, -3, "__index");
   return 1;
